@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>Webcam Streamer</title>
+<script type="text/javascript">
+function turn(dir)
+{
+	xmlhttp=new XMLHttpRequest();
+	xmlhttp.open("GET","/control?direc=".concat(dir),true);
+	xmlhttp.send();
+}
+function toggle(stat)
+{
+	xmlhttp=new XMLHttpRequest();
+	xmlhttp.open("GET","/stream?stat=".concat(stat),true);
+	xmlhttp.send();
+}
+</script>
+</head>
+<body>
+<iframe src="/stream" width="320" height="240"></iframe>
+<button type="button" onclick="turn('left')">Left</button>
+<button type="button" onclick="turn('center')">Center</button>
+<button type="button" onclick="turn('right')">Right</button>
+<button type="button" onclick="toggle('open')">Open</button>
+<button type="button" onclick="toggle('close')">Close</button>
+</body>
+</html>
+
