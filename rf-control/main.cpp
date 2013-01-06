@@ -124,13 +124,18 @@ int main(int argc, char** argv)
 
 	// Take the time, and send it.  This will block until complete
   const char *cmd = argv[1];
-	printf("Now sending command %s...\n", cmd);
 	radio.write(cmd, strlen(cmd));
 
-	// Now, continue listening
-	radio.startListening();
+  if (cmd[0] == '2') {
+    // Now, continue listening
+    radio.startListening();
 
-  sleep(1);
+    while (!radio.available()) {
+    }
+    uint8_t len = radio.getDynamicPayloadSize();
+    radio.read(receive_payload, len);
+    printf("%d\n", receive_payload[0]);
+  }
 
 	return 0;
 }

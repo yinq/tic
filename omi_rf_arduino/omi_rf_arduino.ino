@@ -1,4 +1,5 @@
 #include <SPI.h>
+#include <Servo.h>
 #include "nRF24L01.h"
 #include "RF24.h"
 #include "printf.h"
@@ -11,12 +12,16 @@
 
 RF24 radio(9,10);
 
+Servo myservo;  // create servo object to control a servo
+const int servoPin = 6; // PWM Pin
+
 //
 // Topology
 //
 
 // Radio pipe addresses for the 2 nodes to communicate.
-const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
+const uint64_t pipes[2] = { 
+  0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 
 //
 // Role management
@@ -43,6 +48,8 @@ char receive_payload[max_payload_size+1]; // +1 to allow room for a terminating 
 void setup(void)
 {
   pinMode(relayPin, OUTPUT);
+  myservo.attach(servoPin);
+
   //
   // Print preamble
   //
@@ -62,7 +69,7 @@ void setup(void)
 
   // optionally, increase the delay between retries & # of retries
   radio.setRetries(15,15);
-  
+
   radio.setChannel(120);
 
   //
@@ -87,33 +94,53 @@ void setup(void)
 
 void loop(void)
 {
-    // if there is data ready
-    if ( radio.available() )
+  // if there is data ready
+  if ( radio.available() )
+  {
+    // Dump the payloads until we've gotten everything
+    uint8_t len;
+    bool done = false;
+    while (!done)
     {
-      // Dump the payloads until we've gotten everything
-      uint8_t len;
-      bool done = false;
-      while (!done)
-      {
-        // Fetch the payload, and see if this was the last one.
-	len = radio.getDynamicPayloadSize();
-	done = radio.read( receive_payload, len );
+      // Fetch the payload, and see if this was the last one.
+      len = radio.getDynamicPayloadSize();
+      done = radio.read( receive_payload, len );
 
-	// Put a zero at the end for easy printing
-	receive_payload[len] = 0;
+      // Put a zero at the end for easy printing
+      receive_payload[len] = 0;
 
-	// Spew it
-	printf("Got payload size=%i value=%s\n\r",len,receive_payload);
-        if (receive_payload[0] == '0') {
-          printf("Off\n\r");
-          digitalWrite(relayPin, LOW);
-        } else {
-          printf("On\n\r"); 
-          digitalWrite(relayPin, HIGH);
-        }
+      // Spew it
+      char head = receive_payload[0];
+      if (head == '0') {
+        printf("Off\n\r");
+        digitalWrite(relayPin, LOW);
+      } 
+      else if (head == '1') {
+        printf("On\n\r"); 
+        digitalWrite(relayPin, HIGH);
+      } 
+      else if (head == '2') {
+        // inquiry
+        radio.stopListening();
+        int status = digitalRead(relayPin);
+        printf("Inquiry %d\n\r", status);
+        radio.write(&status, sizeof(int));
+        radio.startListening();
+      } 
+      else if (head == '3') {
+        // Servo
+        int angle = atoi(receive_payload + 1);
+        Serial.println(angle);
+        angle = map(angle, 0, 1023, 0, 179);
+        myservo.write(angle);
+        delay(15);
       }
-      // Now, resume listening so we catch the next packets.
-      radio.startListening();
     }
+    // Now, resume listening so we catch the next packets.
+    radio.startListening();
+  }
 }
 // vim:cin:ai:sts=2 sw=2 ft=cpp
+
+
+

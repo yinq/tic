@@ -1,9 +1,13 @@
+$def with (lamp_status)
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
 "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <title>Webcam Streamer</title>
 <script type="text/javascript">
+// TODO real prompt
+var lamp_stat = $lamp_status;
+
 function turn(dir)
 {
 	xmlhttp=new XMLHttpRequest();
@@ -16,6 +20,15 @@ function toggle(stat)
 	xmlhttp.open("GET","/stream?stat=".concat(stat),true);
 	xmlhttp.send();
 }
+function lamp(cur_stat)
+{
+	xmlhttp=new XMLHttpRequest();
+	xmlhttp.open("GET","/lamp?cur=" + lamp_stat,true);
+	xmlhttp.send();
+  var pp = document.getElementById('lamp_prompt');
+  pp.innerHTML = lamp_stat == 0 ? 'Off' : 'On';
+  lamp_stat = 1 - lamp_stat
+}
 </script>
 </head>
 <body>
@@ -25,6 +38,16 @@ function toggle(stat)
 <button type="button" onclick="turn('right')">Right</button>
 <button type="button" onclick="toggle('open')">Open</button>
 <button type="button" onclick="toggle('close')">Close</button>
+<p>
+<a href="javascript:lamp();">Turn lamp
+<span id="lamp_prompt">
+$if lamp_status == 0:
+  on
+$else:
+  off
+</span>
+</a>
+</p>
 </body>
 </html>
 

@@ -1,0 +1,6 @@
+*.swp
+*.pyc
+/webcam/sessions/
+/rf-control/dist/
+/rf-control/build/
+/rf-control/.dep.inc
